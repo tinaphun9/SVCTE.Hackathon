@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VolTrack — Student Volunteer Check-in</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0f; --surface:#12121a; --surface2:#1a1a26;
+    --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.14);
+    --text:#f0eff8; --muted:#7a798e;
+    --accent:#7c6dfa; --accent-glow:rgba(124,109,250,0.25); --accent-dim:rgba(124,109,250,0.12);
+    --green:#3ecf8e; --green-dim:rgba(62,207,142,0.12);
+    --amber:#f5a623; --amber-dim:rgba(245,166,35,0.12);
+    --red:#f25757; --red-dim:rgba(242,87,87,0.12);
+    --font-display:'DM Sans',sans-serif; --font-body:'DM Sans',sans-serif; --font-mono:'DM Mono',monospace;
+    --radius:12px; --radius-sm:8px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100vh;}
+
+  /* LOGIN */
+  #login-screen{position:fixed;inset:0;background:var(--bg);z-index:500;display:flex;align-items:center;justify-content:center;}
+  .login-box{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:38px;width:420px;max-width:93vw;}
+  .login-logo{font-family:var(--font-display);font-size:26px;font-weight:800;margin-bottom:5px;}
+  .login-logo span{color:var(--accent);}
+  .login-sub{font-size:12px;color:var(--muted);margin-bottom:26px;}
+  .login-tabs{display:flex;border:1px solid var(--border2);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:20px;}
+  .login-tab{flex:1;padding:9px;font-size:13px;font-weight:500;border:none;background:none;color:var(--muted);cursor:pointer;font-family:var(--font-body);transition:all .15s;}
+  .login-tab.active{background:var(--accent);color:#fff;}
+  .f-label{font-size:11px;color:var(--muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;}
+  .f-wrap{margin-bottom:12px;}
+  .l-input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;font-family:var(--font-mono);color:var(--text);}
+  .l-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+  .l-select{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;font-family:var(--font-body);color:var(--text);cursor:pointer;}
+  .l-select:focus{outline:none;border-color:var(--accent);}
+  .l-error{font-size:12px;color:var(--red);margin-bottom:10px;display:none;padding:8px 12px;background:var(--red-dim);border-radius:var(--radius-sm);}
+  .btn-login{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-display);letter-spacing:.04em;transition:opacity .15s;}
+  .btn-login:hover{opacity:.85;}
+  .hint-box{background:var(--surface2);border-radius:var(--radius-sm);padding:10px 13px;font-size:11px;color:var(--muted);margin-top:13px;line-height:1.7;}
+  .period-btn{padding:10px;font-size:13px;font-family:var(--font-body);font-weight:500;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--muted);cursor:pointer;transition:all .15s;width:100%;}
+  .period-btn:hover{border-color:var(--border2);color:var(--text);background:var(--surface2);}
+  .period-btn.active-am{background:rgba(124,109,250,.15);border-color:var(--accent);color:var(--accent);font-weight:600;}
+  .period-btn.active-pm{background:var(--amber-dim);border-color:var(--amber);color:var(--amber);font-weight:600;}
+
+  .hint-box b{color:var(--amber);font-family:var(--font-mono);font-weight:400;}
+
+  /* SHELL */
+  .shell{display:grid;grid-template-columns:216px 1fr;min-height:100vh;}
+  .sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;}
+  .logo{padding:22px 20px 16px;border-bottom:1px solid var(--border);}
+  .logo-mark{font-family:var(--font-display);font-size:20px;font-weight:800;}
+  .logo-mark span{color:var(--accent);}
+  .logo-sub{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-top:2px;}
+  .nav{flex:1;padding:12px 9px;display:flex;flex-direction:column;gap:3px;}
+  .nav-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding:8px 11px 4px;font-weight:500;}
+  .nav-item{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;color:var(--muted);transition:all .15s;border:none;background:none;width:100%;text-align:left;font-family:var(--font-body);}
+  .nav-item:hover{background:var(--surface2);color:var(--text);}
+  .nav-item.active{background:var(--accent-dim);color:var(--accent);font-weight:500;}
+  .nav-item svg{width:16px;height:16px;flex-shrink:0;}
+  .nav-badge{margin-left:auto;background:var(--amber-dim);color:var(--amber);font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;font-family:var(--font-mono);}
+  .sf{padding:13px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);}
+  .session-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green);margin-right:4px;}
+  .user-pill{display:flex;align-items:center;gap:8px;margin-top:7px;padding:7px 9px;background:var(--surface2);border-radius:var(--radius-sm);border:1px solid var(--border);}
+  .up-email{font-size:10px;font-family:var(--font-mono);color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .up-role{font-size:9px;text-transform:uppercase;letter-spacing:.07em;padding:2px 5px;border-radius:3px;font-weight:600;margin-top:2px;}
+  .r-student{background:var(--accent-dim);color:var(--accent);}
+  .r-teacher{background:var(--amber-dim);color:var(--amber);}
+  .so-btn{background:none;border:none;color:var(--muted);font-size:10px;cursor:pointer;font-family:var(--font-body);padding:0;}
+  .so-btn:hover{color:var(--text);}
+
+  .main{display:flex;flex-direction:column;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:15px 26px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:10;}
+  .topbar-title{font-family:var(--font-display);font-size:15px;font-weight:700;}
+  .time-badge{font-family:var(--font-mono);font-size:12px;color:var(--muted);background:var(--surface);padding:5px 11px;border-radius:var(--radius-sm);border:1px solid var(--border);}
+  .content{padding:26px;flex:1;overflow-y:auto;}
+  .view{display:none;}
+  .view.active{display:block;}
+
+  /* COMPONENTS */
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;}
+  .ph{padding:14px 19px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .pt{font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
+  .pb{padding:18px;}
+
+  .ev-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:16px;}
+  .ev-card{border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px;cursor:pointer;transition:all .18s;background:var(--bg);}
+  .ev-card:hover{border-color:var(--border2);transform:translateY(-1px);}
+  .ev-card.sel{border-color:var(--accent);background:var(--accent-dim);box-shadow:0 0 0 1px var(--accent);}
+  .ev-icon{font-size:19px;margin-bottom:6px;}
+  .ev-name{font-size:12px;font-weight:500;color:var(--text);}
+  .ev-hrs{font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-top:2px;}
+  .ev-card.sel .ev-name{color:var(--accent);}
+
+  .field{margin-bottom:11px;}
+  .field label{font-size:10px;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em;}
+  .f-input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:9px 13px;font-size:13px;font-family:var(--font-mono);color:var(--text);}
+  .f-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+  .f-input[readonly]{opacity:.5;cursor:not-allowed;}
+
+  .time-lock{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;margin-bottom:11px;display:flex;align-items:center;gap:12px;}
+  .tl-time{font-family:var(--font-mono);font-size:20px;font-weight:500;color:var(--accent);}
+  .tl-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+
+  .btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text);font-family:var(--font-body);transition:all .15s;}
+  .btn:hover{background:var(--surface2);}
+  .btn-p{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .btn-p:hover{opacity:.85;}
+  .btn-g{background:var(--green-dim);color:var(--green);border-color:rgba(62,207,142,.3);}
+  .btn-g:hover{background:rgba(62,207,142,.22);}
+  .btn-sm{padding:4px 11px;font-size:11px;}
+  .btn-full{width:100%;justify-content:center;padding:10px;}
+
+  .fraud-box{background:var(--red-dim);border:1px solid rgba(242,87,87,.3);border-radius:var(--radius-sm);padding:12px 14px;margin-top:11px;display:none;}
+  .fraud-box.show{display:block;}
+  .fraud-head{font-size:10px;font-weight:600;color:var(--red);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;}
+  .fraud-item{font-size:11px;color:#f8a5a5;padding:2px 0;}
+  .fraud-item::before{content:"→ ";}
+
+  .checkin-grid{display:grid;grid-template-columns:1fr 300px;gap:18px;align-items:start;}
+  .feed-item{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--border);}
+  .feed-item:last-child{border-bottom:none;}
+  .fdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+  .fdot.in{background:var(--green);box-shadow:0 0 5px var(--green);}
+  .fdot.out{background:var(--accent);}
+  .fdot.flag{background:var(--red);}
+  .fid{font-family:var(--font-mono);font-size:10px;color:var(--text);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .fdet{flex:1;font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ftm{font-family:var(--font-mono);font-size:10px;color:var(--muted);}
+
+  .filter-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+  .f-sel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:6px 10px;font-size:12px;font-family:var(--font-body);cursor:pointer;}
+  .f-sel:focus{outline:none;border-color:var(--accent);}
+  .srch{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:6px 10px;font-size:12px;min-width:190px;font-family:var(--font-mono);}
+  .srch:focus{outline:none;border-color:var(--accent);}
+  .srch::placeholder{color:var(--muted);font-family:var(--font-body);}
+
+  .tw{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{text-align:left;padding:8px 12px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);font-family:var(--font-display);}
+  td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  tr:hover td{background:var(--surface2);}
+  tr:last-child td{border-bottom:none;}
+  .mn{font-family:var(--font-mono);font-size:11px;}
+
+  .badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:500;white-space:nowrap;}
+  .badge::before{content:'';width:4px;height:4px;border-radius:50%;flex-shrink:0;}
+  .b-full{background:var(--green-dim);color:var(--green);}
+  .b-full::before{background:var(--green);}
+  .b-partial{background:var(--amber-dim);color:var(--amber);}
+  .b-partial::before{background:var(--amber);}
+  .b-flagged{background:var(--red-dim);color:var(--red);}
+  .b-flagged::before{background:var(--red);}
+  .b-active{background:var(--accent-dim);color:var(--accent);}
+  .b-active::before{background:var(--accent);}
+  .b-pend{background:var(--amber-dim);color:var(--amber);}
+  .b-pend::before{background:var(--amber);}
+  .b-am{background:rgba(124,109,250,.15);color:#a89cf9;}
+  .b-am::before{background:#a89cf9;}
+  .b-pm{background:rgba(245,166,35,.15);color:var(--amber);}
+  .b-pm::before{background:var(--amber);}
+
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:20px;}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden;}
+  .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+  .sc-p::before{background:var(--accent);}
+  .sc-g::before{background:var(--green);}
+  .sc-a::before{background:var(--amber);}
+  .sc-r::before{background:var(--red);}
+  .sl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;font-family:var(--font-display);margin-bottom:7px;}
+  .sv{font-family:var(--font-display);font-size:28px;font-weight:800;line-height:1;margin-bottom:3px;}
+  .ss{font-size:10px;color:var(--muted);}
+
+  .exp-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:13px;margin-bottom:22px;}
+  .exp-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:17px;cursor:pointer;transition:all .2s;}
+  .exp-card:hover{border-color:var(--accent);background:var(--accent-dim);transform:translateY(-2px);}
+  .exp-card h4{font-family:var(--font-display);font-size:13px;font-weight:700;margin-bottom:4px;}
+  .exp-card p{font-size:11px;color:var(--muted);margin-bottom:9px;}
+  .fpill{display:inline-block;padding:2px 8px;border-radius:20px;font-family:var(--font-mono);font-size:10px;background:var(--surface2);color:var(--muted);border:1px solid var(--border);}
+  .prev-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;font-family:var(--font-mono);font-size:11px;color:#a0a0c0;max-height:240px;overflow-y:auto;white-space:pre;line-height:1.7;}
+
+  .ci-tab{padding:9px 20px;font-size:13px;font-weight:500;border:none;background:none;color:var(--muted);cursor:pointer;font-family:var(--font-body);transition:all .15s;}
+  .ci-tab.active{background:var(--accent);color:#fff;}
+  .ci-tab:not(.active):hover{background:var(--surface2);color:var(--text);}
+
+  .active-ev-card{background:var(--surface);border:1px solid rgba(245,166,35,.35);border-radius:var(--radius);padding:20px;margin-bottom:12px;display:flex;align-items:center;gap:18px;}
+  .active-ev-icon{font-size:28px;flex-shrink:0;}
+  .active-ev-info{flex:1;}
+  .active-ev-name{font-size:15px;font-weight:600;margin-bottom:4px;}
+  .active-ev-meta{font-size:12px;color:var(--muted);}
+  .active-ev-time{font-family:var(--font-mono);font-size:12px;color:var(--amber);margin-top:4px;}
+  .btn-checkout{padding:11px 22px;background:var(--amber);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:opacity .15s;white-space:nowrap;}
+  .btn-checkout:hover{opacity:.85;}
+
+  .ev-set-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
+  .ev-set-card .ev-icon{font-size:26px;margin-bottom:10px;}
+  .ev-set-name{font-family:var(--font-display);font-size:14px;font-weight:700;margin-bottom:14px;}
+  .ev-set-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .ev-set-row label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;width:90px;flex-shrink:0;}
+  .ev-set-input{background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:7px 11px;font-size:13px;font-family:var(--font-mono);color:var(--text);width:80px;}
+  .ev-set-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow);}
+  .ev-set-unit{font-size:11px;color:var(--muted);}
+  .ev-set-save{margin-top:4px;}
+
+  .es{text-align:center;padding:44px 20px;color:var(--muted);}
+  .es-icon{font-size:32px;margin-bottom:9px;opacity:.3;}
+
+  #toast{position:fixed;bottom:20px;right:20px;padding:10px 15px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;z-index:9999;display:none;animation:su .2s ease;max-width:310px;}
+  #toast.success{background:var(--green-dim);color:var(--green);border:1px solid rgba(62,207,142,.3);display:flex;align-items:center;gap:6px;}
+  #toast.error{background:var(--red-dim);color:var(--red);border:1px solid rgba(242,87,87,.3);display:flex;align-items:center;gap:6px;}
+  @keyframes su{from{transform:translateY(6px);opacity:0}to{transform:translateY(0);opacity:1}}
+  @keyframes fi{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
+  .fi{animation:fi .25s ease;}
+
+  @media(max-width:760px){
+    .shell{grid-template-columns:1fr;}
+    .sidebar{position:fixed;bottom:0;top:auto;width:100%;height:54px;flex-direction:row;border-right:none;border-top:1px solid var(--border);z-index:100;}
+    .logo,.nav-lbl,.sf{display:none;}
+    .nav{flex-direction:row;padding:5px;overflow-x:auto;}
+    .nav-item{flex-direction:column;gap:2px;padding:5px 9px;font-size:9px;white-space:nowrap;}
+    .nav-item svg{width:14px;height:14px;}
+    .main{padding-bottom:54px;}
+    .content{padding:14px;}
+    .checkin-grid,.stats-grid{grid-template-columns:1fr;}
+    .exp-grid{grid-template-columns:1fr;}
+  }
+  ::-webkit-scrollbar{width:4px;height:4px;}
+  ::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">Vol<span>Track</span></div>
+    <div class="login-sub">MetroEd Student Volunteer Check-in</div>
+    <div class="login-tabs">
+      <button class="login-tab active" onclick="setMode('student')">Student</button>
+      <button class="login-tab" onclick="setMode('teacher')">Teacher / Staff</button>
+    </div>
+
+    <div id="s-fields">
+      <div class="f-wrap">
+        <label class="f-label">School email</label>
+        <input class="l-input" id="sl-email" type="text" placeholder="firstname.lastname@my.metroed.net"
+          oninput="this.value=this.value.toLowerCase()" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="f-wrap">
+        <label class="f-label">Your program / class</label>
+        <select class="l-select" id="sl-class">
+          <option value="">— Select your program —</option>
+          <option>AI Engineering</option><option>Animation</option>
+          <option>Automotive Collision Repair &amp; Refinishing</option>
+          <option>Construction Technology</option><option>Culinary Arts</option>
+          <option>Cybersecurity</option><option>Dental Assisting</option>
+          <option>Electrical Maintenance</option>
+          <option>Electrical Vehicles / Automotive Services</option>
+          <option>Fashion Design &amp; Textile Art</option>
+          <option>Film &amp; Video Production</option>
+          <option>Fire Science / First Responder</option>
+          <option>Forensic Science</option><option>HVAC</option>
+          <option>Law Enforcement</option><option>Mechatronics Engineering</option>
+          <option>Medical Assisting</option>
+          <option>Medical Science / Health Careers</option>
+          <option>Metals Technology</option><option>Nursing Careers</option>
+          <option>Pharmacy Technician</option>
+          <option>Sports Medicine &amp; Kinesiology</option>
+          <option>Veterinary Science</option>
+        </select>
+      </div>
+      <div class="f-wrap">
+        <label class="f-label">Class period</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button type="button" class="period-btn" id="period-am" onclick="setPeriod('AM')">
+            ☀️ AM class
+          </button>
+          <button type="button" class="period-btn" id="period-pm" onclick="setPeriod('PM')">
+            🌙 PM class
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="t-fields" style="display:none">
+      <div class="f-wrap">
+        <label class="f-label">Staff email</label>
+        <input class="l-input" id="tl-email" type="text" placeholder="jsmith@metroed.net"
+          oninput="this.value=this.value.toLowerCase()" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+    </div>
+
+    <div class="l-error" id="l-err"></div>
+    <button class="btn-login" onclick="doLogin()">Sign in →</button>
+    <div class="hint-box" id="l-hint">
+      Student: <b>firstname.lastname@my.metroed.net</b>
+    </div>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div class="shell" id="app" style="display:none">
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">Vol<span>Track</span></div>
+      <div class="logo-sub">Volunteer Check-in</div>
+    </div>
+    <nav class="nav" id="snav"></nav>
+    <div class="sf">
+      <div><span class="session-dot"></span><span id="sdate"></span></div>
+      <div class="user-pill">
+        <div style="flex:1;min-width:0">
+          <div class="up-email" id="up-email"></div>
+          <div class="up-role" id="up-role"></div>
+        </div>
+        <button class="so-btn" onclick="signOut()">sign out</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-title" id="ttitle">—</div>
+      <div class="time-badge" id="clock">--:--:--</div>
+    </header>
+    <div class="content">
+
+      <!-- STUDENT: CHECK-IN -->
+      <div class="view" id="view-checkin">
+
+        <!-- tab switcher -->
+        <div style="display:flex;gap:0;border:1px solid var(--border2);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:18px;width:fit-content">
+          <button class="ci-tab active" id="tab-checkin" onclick="setCITab('checkin')">Check in</button>
+          <button class="ci-tab" id="tab-checkout" onclick="setCITab('checkout')">
+            Active events
+            <span id="active-badge" style="display:none;background:var(--amber);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:6px">0</span>
+          </button>
+        </div>
+
+        <!-- CHECK IN PANEL -->
+        <div id="ci-panel">
+          <div class="checkin-grid">
+            <div>
+              <div class="panel">
+                <div class="ph"><span class="pt">Select event type</span><span style="font-size:11px;color:var(--muted)" id="ev-hint">Choose an event</span></div>
+                <div class="pb">
+                  <div class="ev-grid" id="ev-grid"></div>
+                </div>
+              </div>
+              <div class="panel">
+                <div class="ph"><span class="pt">Check-in time</span></div>
+                <div class="pb">
+                  <div class="time-lock">
+                    <div>
+                      <div class="tl-label">🔒 Locked to current time</div>
+                      <div class="tl-time" id="locked-time">--:--</div>
+                    </div>
+                  </div>
+                  <button class="btn btn-p btn-full" onclick="doCheckin()" id="submit-btn">
+                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                    Check in
+                  </button>
+                  <div class="fraud-box" id="fraud-box">
+                    <div class="fraud-head">⚑ Flagged — your teacher will review</div>
+                    <div id="fraud-list"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="panel">
+                <div class="ph"><span class="pt">My activity</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)" id="feed-count">0</span></div>
+                <div style="padding:0 14px;max-height:480px;overflow-y:auto" id="feed">
+                  <div class="es"><div class="es-icon">📡</div><p style="font-size:12px">Waiting…</p></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTIVE EVENTS / CHECK OUT PANEL -->
+        <div id="co-panel" style="display:none">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:16px">
+            Events you're currently checked in to. When the event is done, hit <strong style="color:var(--text)">Check out</strong>.
+          </div>
+          <div id="active-events-list">
+            <div class="es"><div class="es-icon">🟢</div><p style="font-size:12px">No active check-ins — go check in to an event first.</p></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- IN PROGRESS (both roles, different permissions) -->
+      <div class="view" id="view-inprogress">
+        <div style="margin-bottom:18px">
+          <div style="font-family:var(--font-display);font-size:17px;font-weight:700">In Progress</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px" id="ip-sub"></div>
+        </div>
+
+        <div class="panel">
+          <div class="ph"><span class="pt">Pending check-ins</span><span style="font-size:11px;color:var(--muted)">Awaiting teacher verification</span></div>
+          <div class="tw">
+            <table>
+              <thead><tr><th>Email</th><th>Class / Program</th><th>Event</th><th>Check-in time</th><th>Period</th><th>Flags</th><th id="ci-ah"></th></tr></thead>
+              <tbody id="pci-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="ph"><span class="pt">Pending check-outs</span><span style="font-size:11px;color:var(--muted)">Check-in verified · waiting on check-out approval</span></div>
+          <div class="tw">
+            <table>
+              <thead><tr><th>Email</th><th>Class / Program</th><th>Event</th><th>Check-in</th><th>Check-out</th><th>Hours</th><th>Period</th><th id="co-ah"></th></tr></thead>
+              <tbody id="pco-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ATTENDANCE LOG (both roles) -->
+      <div class="view" id="view-log">
+        <div class="filter-row">
+          <input class="srch" id="srch" placeholder="Search email…" oninput="renderLog()">
+          <select class="f-sel" id="fev" onchange="renderLog()"><option value="">All events</option></select>
+          <select class="f-sel" id="fst" onchange="renderLog()">
+            <option value="">All statuses</option>
+            <option value="verified">Verified</option>
+            <option value="partial">Partial</option>
+            <option value="flagged">Flagged</option>
+            <option value="active">Active</option>
+          </select>
+          <span style="margin-left:auto;font-size:11px;color:var(--muted);font-family:var(--font-mono)" id="log-count"></span>
+        </div>
+        <div class="panel">
+          <div class="tw">
+            <table>
+              <thead><tr><th>Email</th><th>Class</th><th>Event</th><th>Check-in</th><th>Check-out</th><th>Hours</th><th>Period</th><th>Status</th><th>Verified by</th></tr></thead>
+              <tbody id="log-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TEACHER: STATS -->
+      <div class="view" id="view-stats">
+        <div class="stats-grid" id="stats-grid"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="panel">
+            <div class="ph"><span class="pt">Hours by event</span></div>
+            <div class="pb" id="ev-bdown"></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><span class="pt">Top volunteers</span></div>
+            <div class="pb" id="top-vols"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TEACHER: EVENT SETTINGS -->
+      <div class="view" id="view-events">
+        <div style="margin-bottom:18px">
+          <div style="font-family:var(--font-display);font-size:17px;font-weight:700">Event settings</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px">Set the expected duration for each event type. Students will see these hours on their check-in screen.</div>
+        </div>
+        <div id="ev-settings-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px"></div>
+      </div>
+
+      <!-- TEACHER: EXPORT -->
+      <div class="view" id="view-export">
+        <div class="exp-grid">
+          <div class="exp-card" onclick="expDataSheet()">
+            <h4>Volunteer data sheet</h4>
+            <p>Name · Period · Hr in · Hr out · Total hrs — verified records only</p>
+            <span class="fpill">.csv</span>
+          </div>
+          <div class="exp-card" onclick="expFull()">
+            <h4>Full attendance log</h4>
+            <p>All records with verification status and fraud flags</p>
+            <span class="fpill">.csv</span>
+          </div>
+          <div class="exp-card" onclick="expFlagged()">
+            <h4>Flagged records</h4>
+            <p>Only records that triggered fraud detection</p>
+            <span class="fpill">.csv</span>
+          </div>
+          <div class="exp-card" onclick="expJSON()">
+            <h4>Structured JSON</h4>
+            <p>Full machine-readable dataset with all metadata</p>
+            <span class="fpill">.json</span>
+          </div>
+        </div>
+        <div style="font-family:var(--font-display);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px">Preview</div>
+        <div class="prev-box" id="prev-box">Click an export card to preview and download…</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── DATA ──
+const EVS = [
+  {id:'campus_tours',         name:'Campus tours',          icon:'🏫', base:1, max:4},
+  {id:'shadow_days',          name:'Shadow days',           icon:'👥', base:2, max:6},
+  {id:'school_presentations', name:'School presentations',  icon:'🎤', base:1, max:3},
+  {id:'public_events',        name:'Public events',         icon:'🌐', base:2, max:8},
+  {id:'other',                name:'Other',                 icon:'📋', base:1, max:4},
+];
+
+let records = [];
+let evSettings = JSON.parse(localStorage.getItem('vt_evs')||'{}');
+let user   = JSON.parse(localStorage.getItem('vt_user')||'null');
+let selEv  = null;
+let lockT  = null;
+let feedItems = [];
+let toastTmr  = null;
+let lmode  = 'student';
+let selectedPeriod = null;
+
+function setPeriod(p) {
+  selectedPeriod = p;
+  document.getElementById('period-am').className = 'period-btn' + (p==='AM' ? ' active-am' : '');
+  document.getElementById('period-pm').className = 'period-btn' + (p==='PM' ? ' active-pm' : '');
+}
+
+// ── PER-USER STORAGE ──
+// students: save/load only their own records under their email key
+// teachers: load ALL records across every user for oversight
+function userKey(email) { return 'vt_rec_' + email; }
+
+function loadRecordsForUser(u) {
+  if(u.role === 'teacher') {
+    // teachers see every student's records — collect all vt_rec_* keys
+    const all = [];
+    for(let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if(k && k.startsWith('vt_rec_')) {
+        const parsed = JSON.parse(localStorage.getItem(k)||'[]');
+        all.push(...parsed);
+      }
+    }
+    return all.map(r=>({...r, checkinTime: r.checkinTime ? new Date(r.checkinTime) : null, checkoutTime: r.checkoutTime ? new Date(r.checkoutTime) : null}));
+  } else {
+    // students only load their own records
+    const raw = JSON.parse(localStorage.getItem(userKey(u.email))||'[]');
+    return raw.map(r=>({...r, checkinTime: r.checkinTime ? new Date(r.checkinTime) : null, checkoutTime: r.checkoutTime ? new Date(r.checkoutTime) : null}));
+  }
+}
+
+function save() {
+  if(!user) return;
+  if(user.role === 'teacher') {
+    // teachers can verify records — save back to each student's individual key
+    const byEmail = {};
+    records.forEach(r => {
+      if(!byEmail[r.studentId]) byEmail[r.studentId] = [];
+      byEmail[r.studentId].push(r);
+    });
+    Object.entries(byEmail).forEach(([email, recs]) => {
+      localStorage.setItem(userKey(email), JSON.stringify(recs));
+    });
+  } else {
+    // students only save their own records
+    const mine = records.filter(r => r.studentId === user.email);
+    localStorage.setItem(userKey(user.email), JSON.stringify(mine));
+  }
+}
+
+function saveUser() { localStorage.setItem('vt_user', JSON.stringify(user)); }
+function saveEvSettings() { localStorage.setItem('vt_evs', JSON.stringify(evSettings)); }
+
+// get effective hours for an event (teacher override or defaults)
+function getEvHours(id) {
+  const ev = EVS.find(e=>e.id===id);
+  if(!ev) return {base:1, max:4};
+  return {
+    base: evSettings[id+'_base'] !== undefined ? evSettings[id+'_base'] : ev.base,
+    max:  evSettings[id+'_max']  !== undefined ? evSettings[id+'_max']  : ev.max,
+  };
+}
+
+// ── EMAIL RULES ──
+// Student: firstname.lastname@my.metroed.net
+// Teacher: firstletter+lastname@metroed.net  (no dot, no @my)
+function isStuEmail(e) { return /^[a-z]+\.[a-z]+@my\.metroed\.net$/.test(e); }
+function isTchEmail(e) { return /^[a-z][a-z]+@metroed\.net$/.test(e); }
+
+// ── LOGIN ──
+function setMode(m) {
+  lmode = m;
+  document.querySelectorAll('.login-tab').forEach((t,i)=>t.classList.toggle('active',['student','teacher'][i]===m));
+  document.getElementById('s-fields').style.display = m==='student'?'block':'none';
+  document.getElementById('t-fields').style.display = m==='teacher'?'block':'none';
+  document.getElementById('l-hint').innerHTML = m==='student'
+    ? 'Student: <b>firstname.lastname@my.metroed.net</b>'
+    : 'Staff: <b>jsmith@metroed.net</b> (first initial + last name, no dot)';
+  document.getElementById('l-err').style.display='none';
+}
+
+function doLogin() {
+  const err = document.getElementById('l-err');
+  err.style.display='none';
+  if(lmode==='student') {
+    const email = document.getElementById('sl-email').value.trim().toLowerCase();
+    const cls   = document.getElementById('sl-class').value;
+    if(!email)               { err.textContent='Enter your school email.';           err.style.display='block'; return; }
+    if(!isStuEmail(email))   { err.textContent='Use firstname.lastname@my.metroed.net'; err.style.display='block'; return; }
+    if(!cls)                 { err.textContent='Select your program / class.';        err.style.display='block'; return; }
+    if(!selectedPeriod)      { err.textContent='Select AM or PM class period.';       err.style.display='block'; return; }
+    user = {email, cls, period: selectedPeriod, role:'student'};
+  } else {
+    const email = document.getElementById('tl-email').value.trim().toLowerCase();
+    if(!email)               { err.textContent='Enter your staff email.';             err.style.display='block'; return; }
+    if(!isTchEmail(email))   { err.textContent='Use firstinitial+lastname@metroed.net (no dot, no @my)'; err.style.display='block'; return; }
+    user = {email, cls:'', role:'teacher'};
+  }
+  saveUser();
+  records = loadRecordsForUser(user);
+  launch();
+}
+
+function signOut() {
+  user=null; selEv=null; feedItems=[]; records=[];
+  localStorage.removeItem('vt_user');
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  selectedPeriod = null;
+  document.getElementById('sl-email').value='';
+  document.getElementById('sl-class').value='';
+  document.getElementById('tl-email').value='';
+  document.getElementById('period-am').className='period-btn';
+  document.getElementById('period-pm').className='period-btn';
+  document.getElementById('l-err').style.display='none';
+}
+
+function launch() {
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='grid';
+  document.getElementById('up-email').textContent = user.email;
+  const rEl = document.getElementById('up-role');
+  rEl.textContent = user.role==='teacher' ? 'Teacher / Staff' : `Student · ${user.period||''} class`;
+  rEl.className   = 'up-role ' + (user.role==='teacher' ? 'r-teacher' : 'r-student');
+  buildNav();
+  if(user.role==='student') {
+    switchView('checkin');
+    renderEvCards();
+    setLockTime();
+    updateActiveBadge();
+  } else {
+    switchView('inprogress');
+  }
+  updateIPBadge();
+  rebuildFeed();
+}
+
+// ── NAV ──
+function buildNav() {
+  const isT = user.role==='teacher';
+  const items = isT ? [
+    {v:'inprogress', lbl:'In Progress', bid:'ip-badge',
+     svg:'<path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>'},
+    {v:'log', lbl:'Attendance Log', bid:'flag-badge',
+     svg:'<path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>'},
+    {v:'stats', lbl:'Summary',
+     svg:'<path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>'},
+    {v:'events', lbl:'Event Settings',
+     svg:'<path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>'},
+    {v:'export', lbl:'Export',
+     svg:'<path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>'},
+  ] : [
+    {v:'checkin', lbl:'Check-in',
+     svg:'<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>'},
+    {v:'inprogress', lbl:'In Progress', bid:'ip-badge',
+     svg:'<path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>'},
+    {v:'log', lbl:'My Log',
+     svg:'<path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>'},
+  ];
+  document.getElementById('snav').innerHTML = items.map(it=>`
+    <button class="nav-item" id="ni-${it.v}" onclick="switchView('${it.v}')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">${it.svg}</svg>
+      ${it.lbl}
+      ${it.bid?`<span class="nav-badge" id="${it.bid}" style="display:none">0</span>`:''}
+    </button>
+  `).join('');
+}
+
+const TITLES = {checkin:'Check-in Terminal',inprogress:'In Progress',log:'Attendance Log',stats:'Summary & Analytics',events:'Event Settings',export:'Export'};
+function switchView(v) {
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active', el.id==='ni-'+v));
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  const el=document.getElementById('view-'+v); if(el) el.classList.add('active');
+  document.getElementById('ttitle').textContent = TITLES[v]||v;
+  if(v==='inprogress') renderIP();
+  if(v==='log')        renderLog();
+  if(v==='stats')      renderStats();
+  if(v==='events')     renderEvSettings();
+  if(v==='export')     document.getElementById('prev-box').textContent='Click an export card to preview and download…';
+}
+
+// ── CHECK-IN TABS ──
+function setCITab(tab) {
+  document.getElementById('tab-checkin').classList.toggle('active', tab==='checkin');
+  document.getElementById('tab-checkout').classList.toggle('active', tab==='checkout');
+  document.getElementById('ci-panel').style.display  = tab==='checkin'  ? 'block' : 'none';
+  document.getElementById('co-panel').style.display  = tab==='checkout' ? 'block' : 'none';
+  if(tab==='checkout') renderActiveEvents();
+}
+
+function renderActiveEvents() {
+  if(!user) return;
+  const active = records.filter(r=>r.studentId===user.email&&!r.checkoutTime);
+  const el = document.getElementById('active-events-list'); if(!el) return;
+  // update badge
+  const badge = document.getElementById('active-badge');
+  if(badge) { badge.textContent=active.length; badge.style.display=active.length?'inline':'none'; }
+
+  if(!active.length) {
+    el.innerHTML='<div class="es"><div class="es-icon">🟢</div><p style="font-size:12px">No active check-ins — go check in to an event first.</p></div>';
+    return;
+  }
+  el.innerHTML = active.map(rec=>{
+    const ev = EVS.find(e=>e.id===rec.eventId);
+    const h  = getEvHours(rec.eventId);
+    const since = Math.round((Date.now()-new Date(rec.checkinTime))/60000);
+    return `<div class="active-ev-card">
+      <div class="active-ev-icon">${ev?ev.icon:'📋'}</div>
+      <div class="active-ev-info">
+        <div class="active-ev-name">${ev?ev.name:rec.eventId}</div>
+        <div class="active-ev-meta">${rec.studentClass||''} · ${h.base}–${h.max}h expected</div>
+        <div class="active-ev-time">Checked in at ${fmtT(rec.checkinTime)} · ${since} min ago</div>
+      </div>
+      <button class="btn-checkout" onclick="doCheckout(${rec.id})">Check out</button>
+    </div>`;
+  }).join('');
+}
+
+function doCheckout(id) {
+  const rec = records.find(r=>r.id===id); if(!rec) return;
+  const ev  = EVS.find(e=>e.id===rec.eventId);
+  const eh  = getEvHours(rec.eventId);
+  const co  = new Date();
+  if(co<=new Date(rec.checkinTime)) { toast('Check-out time must be after check-in — wait a moment','error'); return; }
+  rec.checkoutTime = co;
+  rec.hours = calcHours(rec.checkinTime, co, rec.eventId);
+  const rawH=(co-new Date(rec.checkinTime))/3600000;
+  if(rawH>eh.max) rec.fraudFlags.push(`Duration ${rawH.toFixed(1)}h exceeds max ${eh.max}h`);
+  if(rec.hours<0.1) rec.fraudFlags.push('Duration under 6 minutes');
+  save(); updateIPBadge();
+  addFeed(rec.studentId,`Checked out · ${rec.hours.toFixed(2)}h · ${ev?ev.name:''}`, 'out');
+  toast(`Checked out of ${ev?ev.name:''} · ${rec.hours.toFixed(2)}h — awaiting teacher verification`,'success');
+  renderActiveEvents();
+  updateActiveBadge();
+}
+
+function updateActiveBadge() {
+  if(!user) return;
+  const n = records.filter(r=>r.studentId===user.email&&!r.checkoutTime).length;
+  const b = document.getElementById('active-badge'); if(!b) return;
+  b.textContent=n; b.style.display=n?'inline':'none';
+}
+
+// ── LOCKED TIME ──
+function setLockTime() {
+  lockT = new Date();
+  const fmt = lockT.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  const ci = document.getElementById('locked-time');   if(ci) ci.textContent = fmt;
+  const co = document.getElementById('locked-cotime'); if(co) co.textContent = fmt;
+}
+
+// ── EVENT CARDS ──
+function renderEvCards() {
+  const el=document.getElementById('ev-grid'); if(!el) return;
+  el.innerHTML = EVS.map(e=>{
+    const h = getEvHours(e.id);
+    return `<div class="ev-card ${selEv===e.id?'sel':''}" onclick="pickEv('${e.id}')">
+      <div class="ev-icon">${e.icon}</div>
+      <div class="ev-name">${e.name}</div>
+      <div class="ev-hrs">${h.base}–${h.max}h</div>
+    </div>`;
+  }).join('');
+}
+function pickEv(id) {
+  selEv=id;
+  const h=getEvHours(id);
+  const ev=EVS.find(e=>e.id===id);
+  document.getElementById('ev-hint').textContent=ev.name+' · '+h.base+'–'+h.max+'h';
+  renderEvCards();
+  updateSubmitLabel();
+}
+
+function updateSubmitLabel() {
+  const lbl = document.getElementById('submit-label'); if(!lbl||!user) return;
+  if(selEv && records.find(r=>r.studentId===user.email&&r.eventId===selEv&&!r.checkoutTime)) {
+    lbl.textContent = 'Submit check-out';
+    document.getElementById('submit-btn').style.background = 'var(--amber)';
+    document.getElementById('submit-btn').style.borderColor = 'var(--amber)';
+  } else {
+    lbl.textContent = 'Submit check-in';
+    document.getElementById('submit-btn').style.background = '';
+    document.getElementById('submit-btn').style.borderColor = '';
+  }
+}
+
+// ── HELPERS ──
+function fmtT(d) { return d ? new Date(d).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '—'; }
+function getPeriod(d, rec) {
+  // if the record has a stored student period, use that; otherwise infer from time
+  if(rec && rec.studentPeriod) return rec.studentPeriod;
+  return new Date(d).getHours()<12 ? 'AM' : 'PM';
+}
+function calcHours(ci,co,eid) {
+  const h=getEvHours(eid);
+  if(!co) return null;
+  const raw=(new Date(co)-new Date(ci))/3600000;
+  if(raw<0.1) return 0;
+  return parseFloat(Math.min(raw,h.max).toFixed(2));
+}
+function getStatus(rec) {
+  if(rec.fraudFlags&&rec.fraudFlags.length) return 'flagged';
+  if(!rec.checkoutTime) return 'active';
+  if(rec.checkinVerified&&rec.checkoutVerified) return 'verified';
+  return 'partial';
+}
+function detectFraud(sid,eid,t) {
+  const flags=[], prev=records.filter(r=>r.studentId===sid);
+  if(prev.find(r=>r.eventId===eid&&!r.checkoutTime)) flags.push('Already actively checked in to this event');
+  if(prev.find(r=>!r.checkoutTime&&r.eventId!==eid)) flags.push('Concurrent active check-in in a different event');
+  const today=new Date(); today.setHours(0,0,0,0);
+  if(prev.filter(r=>new Date(r.checkinTime)>=today).length>=4) flags.push('More than 4 check-ins today');
+  const lo=prev.filter(r=>r.checkoutTime).sort((a,b)=>new Date(b.checkoutTime)-new Date(a.checkoutTime))[0];
+  if(lo&&(t-new Date(lo.checkoutTime))<10*60*1000) flags.push('Re-checked in under 10 minutes after last checkout');
+  return flags;
+}
+
+// ── SUBMIT CHECK-IN ──
+function doCheckin() {
+  if(!user||user.role!=='student') return;
+  if(!selEv) { toast('Select an event type first','error'); return; }
+  if(!lockT) { setLockTime(); }
+  const ev    = EVS.find(e=>e.id===selEv);
+  const eh    = getEvHours(selEv);
+  const sid   = user.email;
+  const t     = lockT;
+
+  // already checked in to this event — tell them to use the Active Events tab
+  const active = records.find(r=>r.studentId===sid&&r.eventId===selEv&&!r.checkoutTime);
+  if(active) {
+    toast('You\'re already checked in to this event — go to Active Events to check out','error');
+    setCITab('checkout');
+    return;
+  }
+
+  const flags = detectFraud(sid, selEv, t);
+  const rec = {
+    id:Date.now(), studentId:sid, studentClass:user.cls, studentPeriod:user.period||null, eventId:selEv,
+    checkinTime:t, checkoutTime:null, hours:null, fraudFlags:flags,
+    checkinVerified:false, checkoutVerified:false,
+    checkinVerifiedBy:null, checkoutVerifiedBy:null,
+  };
+  records.push(rec); save(); updateIPBadge(); updateActiveBadge();
+
+  if(flags.length) {
+    document.getElementById('fraud-box').classList.add('show');
+    document.getElementById('fraud-list').innerHTML=flags.map(f=>`<div class="fraud-item">${f}</div>`).join('');
+    addFeed(sid,`Checked in (flagged) · ${ev.name}`,'flag');
+    toast(`Submitted with ${flags.length} flag${flags.length>1?'s':''} — teacher will review`,'error');
+  } else {
+    document.getElementById('fraud-box').classList.remove('show');
+    addFeed(sid,`Checked in · ${ev.name}`,'in');
+    toast(`Checked in to ${ev.name} — go to Active Events to check out when done`,'success');
+  }
+  setLockTime();
+}
+
+// ── IN PROGRESS ──
+function updateIPBadge() {
+  const n=records.filter(r=>!r.checkinVerified||(r.checkoutTime&&!r.checkoutVerified)).length;
+  const b=document.getElementById('ip-badge'); if(!b) return;
+  if(n>0){b.textContent=n;b.style.display='';}else b.style.display='none';
+}
+
+function renderIP() {
+  const isT = user&&user.role==='teacher';
+  document.getElementById('ip-sub').textContent = isT
+    ? 'Review and approve student check-ins and check-outs below'
+    : 'Your pending submissions — only teachers can approve these';
+  document.getElementById('ci-ah').textContent = isT ? 'Verify' : '';
+  document.getElementById('co-ah').textContent = isT ? 'Verify' : '';
+
+  // pending check-ins
+  const pci = records.filter(r=>!r.checkinVerified);
+  document.getElementById('pci-body').innerHTML = pci.length ? pci.map(rec=>{
+    const ev=EVS.find(e=>e.id===rec.eventId);
+    const fl=rec.fraudFlags&&rec.fraudFlags.length;
+    const btn=isT
+      ?`<button class="btn btn-g btn-sm" onclick="vCI(${rec.id})">✓ Verify</button>`
+      :`<span class="badge b-pend">Pending</span>`;
+    return `<tr class="fi">
+      <td class="mn">${rec.studentId}</td>
+      <td style="font-size:11px;color:var(--muted)">${rec.studentClass||'—'}</td>
+      <td style="font-size:11px">${ev?ev.icon+' '+ev.name:rec.eventId}</td>
+      <td class="mn" style="color:var(--accent)">${fmtT(rec.checkinTime)}</td>
+      <td><span class="badge ${getPeriod(rec.checkinTime,rec)==='AM'?'b-am':'b-pm'}">${getPeriod(rec.checkinTime,rec)}</span></td>
+      <td>${fl?`<span class="badge b-flagged">⚑ ${rec.fraudFlags.length}</span>`:'<span style="color:var(--muted);font-size:11px">—</span>'}</td>
+      <td>${btn}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="7" style="padding:26px;text-align:center;color:var(--muted);font-size:12px">✓ All check-ins verified</td></tr>`;
+
+  // pending check-outs
+  const pco = records.filter(r=>r.checkinVerified&&r.checkoutTime&&!r.checkoutVerified);
+  document.getElementById('pco-body').innerHTML = pco.length ? pco.map(rec=>{
+    const ev=EVS.find(e=>e.id===rec.eventId);
+    const btn=isT
+      ?`<button class="btn btn-g btn-sm" onclick="vCO(${rec.id})">✓ Verify</button>`
+      :`<span class="badge b-pend">Pending</span>`;
+    return `<tr class="fi">
+      <td class="mn">${rec.studentId}</td>
+      <td style="font-size:11px;color:var(--muted)">${rec.studentClass||'—'}</td>
+      <td style="font-size:11px">${ev?ev.icon+' '+ev.name:rec.eventId}</td>
+      <td class="mn">${fmtT(rec.checkinTime)}</td>
+      <td class="mn" style="color:var(--amber)">${fmtT(rec.checkoutTime)}</td>
+      <td class="mn" style="color:var(--green)">${rec.hours!=null?rec.hours.toFixed(2)+'h':'—'}</td>
+      <td><span class="badge ${getPeriod(rec.checkinTime,rec)==='AM'?'b-am':'b-pm'}">${getPeriod(rec.checkinTime,rec)}</span></td>
+      <td>${btn}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="8" style="padding:26px;text-align:center;color:var(--muted);font-size:12px">No pending check-outs</td></tr>`;
+}
+
+function vCI(id) {
+  if(!user||user.role!=='teacher') return;
+  const rec=records.find(r=>r.id===id); if(!rec) return;
+  rec.checkinVerified=true; rec.checkinVerifiedBy=user.email;
+  save(); updateIPBadge(); renderIP();
+  toast(`Check-in verified for ${rec.studentId}`,'success');
+}
+function vCO(id) {
+  if(!user||user.role!=='teacher') return;
+  const rec=records.find(r=>r.id===id); if(!rec) return;
+  rec.checkoutVerified=true; rec.checkoutVerifiedBy=user.email;
+  save(); updateIPBadge(); renderIP();
+  toast(`Check-out verified for ${rec.studentId}`,'success');
+}
+
+// ── LOG ──
+function renderLog() {
+  const search=(document.getElementById('srch').value||'').toLowerCase();
+  const evF=document.getElementById('fev').value;
+  const stF=document.getElementById('fst').value;
+  const isT=user&&user.role==='teacher';
+
+  const fe=document.getElementById('fev'); const cur=fe.value;
+  fe.innerHTML='<option value="">All events</option>'+EVS.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
+  fe.value=cur;
+
+  let recs=[...records].reverse();
+  if(!isT) recs=recs.filter(r=>r.studentId===user.email); // students see only their own
+  if(search) recs=recs.filter(r=>r.studentId.includes(search));
+  if(evF) recs=recs.filter(r=>r.eventId===evF);
+  if(stF) recs=recs.filter(r=>getStatus(r)===stF);
+
+  document.getElementById('log-count').textContent=recs.length+' record'+(recs.length!==1?'s':'');
+  const tbody=document.getElementById('log-body');
+  if(!recs.length) {
+    tbody.innerHTML=`<tr><td colspan="9" style="padding:34px;text-align:center;color:var(--muted);font-size:12px">No records found.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML=recs.map(rec=>{
+    const ev=EVS.find(e=>e.id===rec.eventId);
+    const st=getStatus(rec);
+    const bc={verified:'b-full',partial:'b-partial',flagged:'b-flagged',active:'b-active'}[st]||'';
+    const vby=rec.checkoutVerifiedBy||rec.checkinVerifiedBy||'—';
+    return `<tr>
+      <td class="mn">${rec.studentId}</td>
+      <td style="font-size:11px;color:var(--muted)">${rec.studentClass||'—'}</td>
+      <td style="font-size:11px">${ev?ev.icon+' '+ev.name:rec.eventId}</td>
+      <td class="mn">${fmtT(rec.checkinTime)}</td>
+      <td class="mn">${fmtT(rec.checkoutTime)}</td>
+      <td class="mn" style="color:var(--green)">${rec.hours!=null?rec.hours.toFixed(2)+'h':'—'}</td>
+      <td><span class="badge ${getPeriod(rec.checkinTime,rec)==='AM'?'b-am':'b-pm'}">${getPeriod(rec.checkinTime,rec)}</span></td>
+      <td><span class="badge ${bc}">${st.charAt(0).toUpperCase()+st.slice(1)}</span></td>
+      <td style="font-size:11px;color:var(--muted)">${vby}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── STATS ──
+function renderStats() {
+  const total=records.length, uniq=new Set(records.map(r=>r.studentId)).size;
+  const totalH=records.reduce((s,r)=>s+(r.hours||0),0);
+  const flagged=records.filter(r=>r.fraudFlags&&r.fraudFlags.length).length;
+  document.getElementById('stats-grid').innerHTML=`
+    <div class="stat-card sc-p"><div class="sl">Check-ins</div><div class="sv">${total}</div><div class="ss">total submissions</div></div>
+    <div class="stat-card sc-g"><div class="sl">Students</div><div class="sv">${uniq}</div><div class="ss">unique volunteers</div></div>
+    <div class="stat-card sc-a"><div class="sl">Hours</div><div class="sv">${totalH.toFixed(1)}</div><div class="ss">total logged</div></div>
+    <div class="stat-card sc-r"><div class="sl">Flagged</div><div class="sv" style="color:${flagged?'var(--red)':'var(--text)'}">${flagged}</div><div class="ss">need review</div></div>
+  `;
+  const maxH=Math.max(...EVS.map(ev=>records.filter(r=>r.eventId===ev.id&&r.hours).reduce((s,r)=>s+r.hours,0)),0.1);
+  document.getElementById('ev-bdown').innerHTML=EVS.map(ev=>{
+    const h=records.filter(r=>r.eventId===ev.id&&r.hours).reduce((s,r)=>s+r.hours,0);
+    const cnt=records.filter(r=>r.eventId===ev.id).length;
+    if(!cnt) return '';
+    return `<div style="display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:15px;width:18px">${ev.icon}</span>
+      <span style="flex:1;font-size:11px">${ev.name}</span>
+      <div style="flex:1;height:3px;background:var(--surface2);border-radius:2px"><div style="height:100%;background:var(--accent);width:${Math.round(h/maxH*100)}%"></div></div>
+      <span class="mn" style="font-size:10px;color:var(--muted);min-width:28px;text-align:right">${h.toFixed(1)}h</span>
+    </div>`;
+  }).join('')||'<p style="font-size:12px;color:var(--muted)">No data.</p>';
+  const byStu={};
+  records.forEach(r=>{
+    if(!byStu[r.studentId]) byStu[r.studentId]={id:r.studentId,hours:0,ev:0};
+    byStu[r.studentId].hours+=r.hours||0; byStu[r.studentId].ev++;
+  });
+  const top=Object.values(byStu).sort((a,b)=>b.hours-a.hours).slice(0,6);
+  document.getElementById('top-vols').innerHTML=top.length?top.map((s,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span class="mn" style="font-size:10px;color:var(--muted);width:14px">${i+1}</span>
+      <div style="width:26px;height:26px;border-radius:50%;background:var(--accent-dim);border:1px solid var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:8px;color:var(--accent);flex-shrink:0">${s.id.slice(0,2).toUpperCase()}</div>
+      <span style="flex:1;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.id}</span>
+      <span class="mn" style="font-size:11px;color:var(--green)">${s.hours.toFixed(2)}h</span>
+    </div>
+  `).join(''):'<p style="font-size:12px;color:var(--muted)">No data.</p>';
+}
+
+// ── EVENT SETTINGS (teacher) ──
+function renderEvSettings() {
+  const grid = document.getElementById('ev-settings-grid'); if(!grid) return;
+  grid.innerHTML = EVS.map(ev=>{
+    const h = getEvHours(ev.id);
+    return `<div class="ev-set-card">
+      <div class="ev-icon">${ev.icon}</div>
+      <div class="ev-set-name">${ev.name}</div>
+      <div class="ev-set-row">
+        <label>Expected hrs</label>
+        <input class="ev-set-input" id="es-base-${ev.id}" type="number" min="0.25" max="24" step="0.25" value="${h.base}">
+        <span class="ev-set-unit">hrs (base)</span>
+      </div>
+      <div class="ev-set-row">
+        <label>Maximum hrs</label>
+        <input class="ev-set-input" id="es-max-${ev.id}" type="number" min="0.25" max="24" step="0.25" value="${h.max}">
+        <span class="ev-set-unit">hrs (cap)</span>
+      </div>
+      <button class="btn btn-p btn-sm ev-set-save" onclick="saveEvSetting('${ev.id}')">Save</button>
+    </div>`;
+  }).join('');
+}
+
+function saveEvSetting(id) {
+  const base = parseFloat(document.getElementById('es-base-'+id).value);
+  const max  = parseFloat(document.getElementById('es-max-'+id).value);
+  if(isNaN(base)||base<=0) { toast('Enter a valid base hours value','error'); return; }
+  if(isNaN(max)||max<base) { toast('Max hours must be ≥ base hours','error'); return; }
+  evSettings[id+'_base'] = base;
+  evSettings[id+'_max']  = max;
+  saveEvSettings();
+  toast(`${EVS.find(e=>e.id===id).name} updated: ${base}–${max}h`,'success');
+}
+
+// ── EXPORT ──
+function csvR(arr){return arr.map(c=>`"${String(c??'').replace(/"/g,'""')}"`).join(',')+'\n';}
+
+function expDataSheet() {
+  // Volunteer data sheet: verified records only
+  let out=csvR(['Volunteer name','Period (AM/PM)','Hr checked in','Hr checked out','Total hrs']);
+  records.filter(r=>r.checkinVerified).forEach(r=>{
+    const name=r.studentId.replace(/@my\.metroed\.net|@metroed\.net/g,'');
+    out+=csvR([name, getPeriod(r.checkinTime,r), fmtT(r.checkinTime), fmtT(r.checkoutTime), r.hours!=null?r.hours.toFixed(2):'']);
+  });
+  prevDl(out,'volunteer_datasheet.csv','text/csv');
+}
+function expFull() {
+  let out=csvR(['Email','Class','Event','Check-in','Check-out','Hours','Period','Status','CI verified by','CO verified by','Fraud flags']);
+  records.forEach(r=>{
+    const ev=EVS.find(e=>e.id===r.eventId);
+    out+=csvR([r.studentId,r.studentClass||'',ev?ev.name:'',fmtT(r.checkinTime),fmtT(r.checkoutTime),r.hours!=null?r.hours.toFixed(2):'',getPeriod(r.checkinTime,r),getStatus(r),r.checkinVerifiedBy||'',r.checkoutVerifiedBy||'',(r.fraudFlags||[]).join(' | ')]);
+  });
+  prevDl(out,'attendance_full.csv','text/csv');
+}
+function expFlagged() {
+  let out=csvR(['Email','Class','Event','Check-in','Hours','Flags']);
+  records.filter(r=>r.fraudFlags&&r.fraudFlags.length).forEach(r=>{
+    const ev=EVS.find(e=>e.id===r.eventId);
+    out+=csvR([r.studentId,r.studentClass||'',ev?ev.name:'',fmtT(r.checkinTime),r.hours!=null?r.hours.toFixed(2):'',(r.fraudFlags||[]).join(' | ')]);
+  });
+  prevDl(out,'flagged_records.csv','text/csv');
+}
+function expJSON() {
+  const data={exportedAt:new Date().toISOString(),records:records.map(r=>({...r,status:getStatus(r),period:getPeriod(r.checkinTime,r),checkinTime:r.checkinTime?new Date(r.checkinTime).toISOString():null,checkoutTime:r.checkoutTime?new Date(r.checkoutTime).toISOString():null}))};
+  prevDl(JSON.stringify(data,null,2),'volunteer_data.json','application/json');
+}
+function prevDl(txt,fname,mime) {
+  document.getElementById('prev-box').textContent=txt.slice(0,3000)+(txt.length>3000?'\n\n[… truncated]':'');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([txt],{type:mime}));
+  a.download=fname; a.click();
+  toast('Downloaded: '+fname,'success');
+}
+
+// ── FEED ──
+function addFeed(sid,detail,type) {
+  feedItems.unshift({sid,detail,type,time:new Date()});
+  if(feedItems.length>40) feedItems.pop();
+  renderFeed();
+}
+function renderFeed() {
+  const el=document.getElementById('feed'); if(!el) return;
+  const fc=document.getElementById('feed-count'); if(fc) fc.textContent=feedItems.length;
+  if(!feedItems.length) {
+    el.innerHTML='<div class="es"><div class="es-icon">📡</div><p style="font-size:12px">Waiting…</p></div>'; return;
+  }
+  el.innerHTML=feedItems.map(f=>`
+    <div class="feed-item">
+      <div class="fdot ${f.type}"></div>
+      <div class="fid">${f.sid.split('@')[0]}</div>
+      <div class="fdet">${f.detail}</div>
+      <div class="ftm">${f.time.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
+    </div>
+  `).join('');
+}
+function rebuildFeed() {
+  if(!user) return;
+  records.filter(r=>r.studentId===user.email).slice(-12).forEach(r=>{
+    const ev=EVS.find(e=>e.id===r.eventId);
+    const type=r.fraudFlags&&r.fraudFlags.length?'flag':r.checkoutTime?'out':'in';
+    feedItems.push({sid:r.studentId,detail:(r.checkoutTime?'Checked out':'Checked in')+' · '+(ev?ev.name:''),type,time:new Date(r.checkinTime)});
+  });
+  feedItems.reverse();
+  renderFeed();
+}
+
+// ── TOAST ──
+function toast(msg,type) {
+  const t=document.getElementById('toast');
+  t.innerHTML=`<span>${type==='success'?'✓':'⚑'}</span><span>${msg}</span>`;
+  t.className='toast '+type;
+  clearTimeout(toastTmr);
+  toastTmr=setTimeout(()=>{t.className='toast';},3500);
+}
+
+// ── CROSS-TAB SYNC ──
+// When a student checks in on another tab, teacher tab auto-refreshes
+window.addEventListener('storage', (e) => {
+  if(!user || !e.key || !e.key.startsWith('vt_rec_')) return;
+  records = loadRecordsForUser(user);
+  updateIPBadge();
+  const view = document.querySelector('.view.active');
+  if(view && view.id === 'view-inprogress') renderIP();
+  if(view && view.id === 'view-log') renderLog();
+  if(view && view.id === 'view-stats') renderStats();
+});
+
+// ── CLOCK ──
+function tick() {
+  const d=new Date();
+  const c=document.getElementById('clock'); if(c) c.textContent=d.toLocaleTimeString();
+  const sd=document.getElementById('sdate'); if(sd) sd.textContent=d.toLocaleDateString([],{month:'short',day:'numeric'});
+}
+setInterval(tick,1000); tick();
+
+// ── INIT ──
+if(user) { records = loadRecordsForUser(user); launch(); } else { document.getElementById('login-screen').style.display='flex'; }
+</script>
+</body>
+</html>
