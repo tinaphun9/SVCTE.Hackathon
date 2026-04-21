@@ -1,4 +1,6 @@
 # SVCTE.Hackathon
 Our hackathon project is a solution to the issue that event coordinators often encounter with a larger number of student volunteers. They need a fast, fraud-resistant, digital check-in system for student volunteers that automatically calculates hours by event type, tracks partial attendance, and exports the data in a structured way for teacher verification. Otherwise, event coordinators will find it difficult to track volunteer attendance and hours. This issue will lead to no knowledge about student whereabouts, miscommunication, and inaccurate check in and out times. 
 Our web application will have logins in order to prevent identity theft, and separate log-in pages for teachers and students. Students can track their check-in and check-out time by logging into their email, and filling out the correct information for their course and period. Teachers will also have their own login feature and can see the students’ request for the check-in and out times, and then approve them. The feature prevents dishonestness about the inputted times, as teachers verify them.
-The file needed to run the program is founded in the 
+
+
+The file needed to run the program is founded in the "Web Application Download" page. It can be run as is, but it can be easily altered to unique features.
