@@ -3,4 +3,4 @@ Our hackathon project is a solution to the issue that event coordinators often e
 Our web application will have logins in order to prevent identity theft, and separate log-in pages for teachers and students. Students can track their check-in and check-out time by logging into their email, and filling out the correct information for their course and period. Teachers will also have their own login feature and can see the students’ request for the check-in and out times, and then approve them. The feature prevents dishonestness about the inputted times, as teachers verify them.
 
 
-The file needed to run the program is founded in the "Web Application Download" page. It can be run as is, but it can be easily altered to unique features.
+The file needed to run the program is founded in the "Web Application Download" page. It can be run as is, but it can be easily altered for more unique features.
